@@ -36,7 +36,7 @@ function nameable<T extends Codec>(codec: T): Nameable<T> {
     return Object.assign(f, codec) as Nameable<T>;
 }
 
-const integer = nameable({
+const integer = nameable<RegexpCodec<number>>({
     pattern: /-?(([1-9][0-9]+) | [0-9])/,
     decoder: (value: string) => {
         const n = Number(value);
@@ -71,7 +71,7 @@ type Ast<Tokens extends (Named & Codec)[]> =
     A.Compute<{ [Value in Tokens[Exclude<keyof Tokens, keyof []>]as ExtractName<Value>]: ExtractType<Value> }>;
 
 
-function either<Codecs extends [Codec, ...Codec[]]>(...codecs: [...Codecs]): Nameable<Codec<ExtractType<L.UnionOf<Codecs>>>> {
+function either<Codecs extends [Named & Codec, ...Named & Codec[]]>(...codecs: [...Codecs]): Nameable<Codec<ExtractType<L.UnionOf<Codecs>>>> {
     // return nameable({
 
     // });
@@ -91,7 +91,7 @@ const declaration = tkn`let\s+${identifier('id')}\s*=\s*${stringLiteral('value')
 const r = assignment.decoder('hello');
 const b = declaration.decoder('goodbye');
 
-const primitive = either(integer, stringLiteral);
+const primitive = either(integer('integer'), stringLiteral('string'));
 
 // const result = declaration.encoder({ id: '123', value: 'frogFace' });
 const isOk = r.ok!;
