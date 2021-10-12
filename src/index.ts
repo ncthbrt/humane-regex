@@ -15,7 +15,7 @@ type Encoder<Type> = (value: Type) => string;
 
 interface Codec<Type = any> {
     decoder: Decoder<Type>,
-    // encoder: Encoder<Type>
+    encoder: Encoder<Type>
 };
 
 interface RegexpCodec<Type = any> extends Codec<Type> {
@@ -46,6 +46,7 @@ const integer = nameable<RegexpCodec<number>>({
             return { error: true, message: 'NaN' };
         }
     },
+    encoder: (number: number) => `${number | 0}`
 });
 
 
@@ -54,6 +55,7 @@ const stringLiteral = nameable({
     decoder: (value: string) => ({
         ok: value.substring(1, value.length - 1).replace('\\"', '"')
     }),
+    encoder: (str: string) => `"${str.replace('"', '\\"')}"`
 });
 
 const identifier = nameable({
@@ -71,7 +73,7 @@ type Ast<Tokens extends (Named & Codec)[]> =
     A.Compute<{ [Value in Tokens[Exclude<keyof Tokens, keyof []>]as ExtractName<Value>]: ExtractType<Value> }>;
 
 
-function either<Codecs extends [Named & Codec, ...Named & Codec[]]>(...codecs: [...Codecs]): Nameable<Codec<ExtractType<L.UnionOf<Codecs>>>> {
+function either<Codecs extends [Named & Codec, ...Named & Codec[]]>(...codecs: [...Codecs]): Nameable<Codec<Partial<Ast<Codecs>>>> {
     // return nameable({
 
     // });
@@ -79,19 +81,19 @@ function either<Codecs extends [Named & Codec, ...Named & Codec[]]>(...codecs: [
 
 
 
-function tkn<Tokens extends (Named & Codec)[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Codec<Ast<Tokens>> {
+
+function tkn<Tokens extends (Named & Codec)[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Nameable<Codec<Ast<Tokens>>> {
 
 }
 
 type B = Codec<ExtractType<L.UnionOf<[Codec<number>, Codec<string>]>>>;
 
-const assignment = tkn`\s*${identifier('id')}\s*=\s*${stringLiteral('value')}\s*;`;
 const declaration = tkn`let\s+${identifier('id')}\s*=\s*${stringLiteral('value')}\s*;`;
+const primitive = either(integer('integer'), stringLiteral('string'));
+const assignment = tkn`\s*${identifier('id')}\s*=\s*${primitive('value')}\s*;`;
 
 const r = assignment.decoder('hello');
 const b = declaration.decoder('goodbye');
 
-const primitive = either(integer('integer'), stringLiteral('string'));
-
-// const result = declaration.encoder({ id: '123', value: 'frogFace' });
+const result = assignment.decoder('hello');
 const isOk = r.ok!;
