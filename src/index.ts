@@ -82,15 +82,14 @@ function either<Codecs extends [Named & Codec, ...Named & Codec[]]>(...codecs: [
 
 
 
-function tkn<Tokens extends (Named & Codec)[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Nameable<Codec<Ast<Tokens>>> {
+function token<Tokens extends Codec[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Nameable<Codec<Ast<L.Select<Tokens, Named & Codec>>>> {
 
 }
 
-type B = Codec<ExtractType<L.UnionOf<[Codec<number>, Codec<string>]>>>;
-
-const declaration = tkn`let\s+${identifier('id')}\s*=\s*${stringLiteral('value')}\s*;`;
+type A = Nameable<Codec<Ast<L.Select<[], Named>>>>
+const declaration = token`let\s+${identifier('id')}\s*=\s*${stringLiteral('value')}\s*;`;
 const primitive = either(integer('integer'), stringLiteral('string'));
-const assignment = tkn`\s*${identifier('id')}\s*=\s*${primitive('value')}\s*;`;
+const assignment = token`\s*${identifier('id')}\s*=\s*${primitive('value')}\s*;`;
 
 const r = assignment.decoder('hello');
 const b = declaration.decoder('goodbye');
