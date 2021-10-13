@@ -1,14 +1,12 @@
-import { A, L } from 'ts-toolbelt';
+import { A, L, O } from 'ts-toolbelt';
 
 type Result<T> =
     | { ok: T, error?: void }
     | { error: true, message?: string, ok?: void };
 
-
 type Named<Name extends string = string> = {
     name: Name
 };
-
 
 type Decoder<Type> = (blob: string) => Result<Type>;
 type Encoder<Type> = (value: Type) => string;
@@ -68,28 +66,38 @@ type ExtractName<T> = T extends Named<infer Name> ? Name : never;
 type ExtractType<T> = T extends Codec<infer Type> ? Type : never;
 
 
+type OneOf<T> = A.Compute<{ [K in keyof T]: { [K1 in K]: T[K] } & ({ [K2 in Exclude<keyof T, K>]: void }) }[keyof T]>;
 
 type Ast<Tokens extends (Named & Codec)[]> =
     A.Compute<{ [Value in Tokens[Exclude<keyof Tokens, keyof []>]as ExtractName<Value>]: ExtractType<Value> }>;
 
 
-function either<Codecs extends [Named & Codec, ...Named & Codec[]]>(...codecs: [...Codecs]): Nameable<Codec<Partial<Ast<Codecs>>>> {
+function either<Codecs extends [Named & Codec, ...Named & Codec[]]>(...codecs: [...Codecs]): Nameable<Codec<OneOf<Ast<Codecs>>>> {
     // return nameable({
 
     // });
 }
 
+function maybe<C extends Codec>(codec: C): Nameable<Codec<null | ExtractType<C>>> {
 
+}
 
+function sequence<C extends Codec>(codec: C): Nameable<Codec<ExtractType<C>[]>> {
 
-function token<Tokens extends Codec[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Nameable<Codec<Ast<L.Select<Tokens, Named & Codec>>>> {
+}
+
+function regex<Tokens extends Codec[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Nameable<Codec<Ast<L.Select<Tokens, Named & Codec>>>> {
 
 }
 
 type A = Nameable<Codec<Ast<L.Select<[], Named>>>>
-const declaration = token`let\s+${identifier('id')}\s*=\s*${stringLiteral('value')}\s*;`;
+const ws = regex`\s+`;
+const maybeWs = maybe(ws);
+const declaration = regex`let${ws}${identifier('id')}${maybeWs}=${maybeWs}${stringLiteral('value')}${maybeWs};`;
 const primitive = either(integer('integer'), stringLiteral('string'));
-const assignment = token`\s*${identifier('id')}\s*=\s*${primitive('value')}\s*;`;
+const assignment = regex`${ws}${identifier('id')}${ws}=${ws}${primitive('value')}${ws};`;
+
+const expression = sequence(either(assignment('assignment'), declaration('declaration')));
 
 const r = assignment.decoder('hello');
 const b = declaration.decoder('goodbye');
