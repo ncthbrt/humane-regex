@@ -1,5 +1,5 @@
 {
-  "name": "strong-parse",
+  "name": "humane-regex",
   "version": "1.0.0",
   "description": "Strongly typed parser for typescript",
   "main": "index.js",
