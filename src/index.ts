@@ -86,21 +86,23 @@ function sequence<C extends Codec>(codec: C): Nameable<Codec<ExtractType<C>[]>> 
 
 }
 
-function regex<Tokens extends Codec[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Nameable<Codec<Ast<L.Select<Tokens, Named & Codec>>>> {
+
+function nonEmptySequence<C extends Codec>(codec: C): Nameable<Codec<[ExtractType<C>, ...ExtractType<C>[]]>> {
 
 }
 
-type A = Nameable<Codec<Ast<L.Select<[], Named>>>>
+function regex<Tokens extends Codec[]>(strings: TemplateStringsArray, ...values: [...Tokens]): Nameable<Codec<Ast<L.Select<Tokens, Named & Codec>>>> {
+}
+
+function whitespace() {
+
+}
+
+
 const ws = regex`\s+`;
 const maybeWs = maybe(ws);
 const declaration = regex`let${ws}${identifier('id')}${maybeWs}=${maybeWs}${stringLiteral('value')}${maybeWs};`;
 const primitive = either(integer('integer'), stringLiteral('string'));
 const assignment = regex`${ws}${identifier('id')}${ws}=${ws}${primitive('value')}${ws};`;
+const expression = nonEmptySequence(either(assignment('assignment'), declaration('declaration')));
 
-const expression = sequence(either(assignment('assignment'), declaration('declaration')));
-
-const r = assignment.decoder('hello');
-const b = declaration.decoder('goodbye');
-
-const result = assignment.decoder('hello');
-const isOk = r.ok!;
