@@ -1,2 +1,4 @@
-# strong-parse
-Strongly typed parser for typescript
+# Humane Regex
+Regular Expressions designed for humans in typescript
+
+
